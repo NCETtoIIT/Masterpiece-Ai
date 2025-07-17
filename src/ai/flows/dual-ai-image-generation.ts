@@ -66,8 +66,8 @@ const dualAIImageGenerationFlow = ai.defineFlow(
     const [geminiImage, openAIImage] = await Promise.all([geminiResult, openAIResult]);
     
     return {
-      geminiImageUrl: geminiImage.media!.url,
-      openAIImageUrl: openAIImage.media!.url,
+      geminiImageUrl: geminiImage.media?.url ?? '',
+      openAIImageUrl: openAIImage.media?.url ?? '',
     };
   }
 );
