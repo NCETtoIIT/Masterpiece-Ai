@@ -29,6 +29,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { cn } from '@/lib/utils';
 import { Logo } from '@/components/logo';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { ThemeToggle } from '@/components/theme-toggle';
 
 const navItems = [
   { href: '/dashboard', icon: Palette, label: 'Generate' },
@@ -94,6 +95,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 <DropdownMenuSeparator />
                 <DropdownMenuItem>Profile</DropdownMenuItem>
                 <DropdownMenuItem>Billing</DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <ThemeToggle />
                 <DropdownMenuSeparator />
                 <DropdownMenuItem asChild>
                   <Link href="/">
