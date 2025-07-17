@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Download, Share2, RefreshCw, Bot, History as HistoryIcon, CornerDownLeft } from 'lucide-react';
+import { Download, Share2, RefreshCw, Bot, History as HistoryIcon, CornerDownLeft, Palette } from 'lucide-react';
 import { dualAIImageGeneration } from '@/ai/flows/dual-ai-image-generation';
 import Image from 'next/image';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -138,9 +138,9 @@ export default function GeneratePage() {
             <Button onClick={handleGenerate} disabled={isPending} className="font-bold">
               {isPending ? 'Generating...' : 'Generate Image'}
             </Button>
-            <p className="text-xs text-muted-foreground text-center">
+            <div className="text-xs text-muted-foreground text-center">
               Press <Badge variant="secondary" className="px-1.5 py-0.5"><CornerDownLeft className="w-3 h-3 mr-1" />+Enter</Badge> to generate
-            </p>
+            </div>
           </CardFooter>
         </Card>
 
