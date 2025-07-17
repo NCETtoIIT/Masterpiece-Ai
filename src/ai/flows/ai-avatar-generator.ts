@@ -1,7 +1,7 @@
 'use server';
 
 /**
- * @fileOverview This file defines the AI Avatar Generator flow, which generates stylized avatars from user-uploaded photos using both Gemini and OpenAI.
+ * @fileOverview This file defines the AI Avatar Generator flow, which generates stylized avatars from user-uploaded photos using both Gemini and a simulated OpenAI model.
  *
  * @exports aiAvatarGenerator - The main function to generate avatars.
  * @exports AIAvatarGeneratorInput - The input type for the aiAvatarGenerator function.
@@ -15,11 +15,9 @@ const AIAvatarGeneratorInputSchema = z.object({
   photoDataUri: z
     .string()
     .describe(
-      'A photo of a person, as a data URI that must include a MIME type and use Base64 encoding. Expected format: \'data:<mimetype>;base64,<encoded_data>\'.'
+      "A photo of a person, as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'."
     ),
   theme: z.string().describe('The theme for the avatar (e.g., cyberpunk, fantasy hero, professional headshot).'),
-  geminiApiKey: z.string().describe('The Gemini API key.'),
-  openAiApiKey: z.string().describe('The OpenAI API key.'),
 });
 export type AIAvatarGeneratorInput = z.infer<typeof AIAvatarGeneratorInputSchema>;
 
@@ -33,49 +31,43 @@ export async function aiAvatarGenerator(input: AIAvatarGeneratorInput): Promise<
   return aiAvatarGeneratorFlow(input);
 }
 
-const prompt = ai.definePrompt({
-  name: 'aiAvatarGeneratorPrompt',
-  input: {schema: AIAvatarGeneratorInputSchema},
-  output: {schema: AIAvatarGeneratorOutputSchema},
-  prompt: `You are an AI avatar generator. You will generate two stylized avatars based on the user's photo and theme.
-
-  Instructions:
-  1. Generate one avatar using the Gemini API and another using the OpenAI API.
-  2. The avatars should be stylized according to the user-provided theme.
-  3. Return both avatars as data URIs.
-
-  User Photo: {{media url=photoDataUri}}
-  Theme: {{{theme}}}
-  Gemini API Key: {{{geminiApiKey}}}
-  OpenAI API Key: {{{openAiApiKey}}}
-  `, // Ensure the model is aware it needs to use the API keys, even though the flow handles the actual calls.
-});
-
 const aiAvatarGeneratorFlow = ai.defineFlow(
   {
     name: 'aiAvatarGeneratorFlow',
     inputSchema: AIAvatarGeneratorInputSchema,
     outputSchema: AIAvatarGeneratorOutputSchema,
   },
-  async input => {
-    // Ideally, the API calls to Gemini and OpenAI would happen here.
-    // However, due to the constraints of the environment, we cannot make actual API calls.
-    // Instead, we return placeholder data URIs.
+  async (input) => {
+    const promptText = `Generate a stylized avatar based on the user's photo in the style of: ${input.theme}.`;
 
-    // Placeholder data URIs for demonstration purposes.
-    const geminiAvatar = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAUAAAAFCAYAAACNbyblAAAAHElEQVQI12P4//8/w+bA6MDAwMDAoYGAAEgAAAABJRU5ErkJggg==';
-    const openAiAvatar = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAUAAAAFCAYAAACNbyblAAAAHElEQVQI12P4//8/w+bA6MDAwMDAoYGAAEgAAAABJRU5ErkJggg==';
+    const geminiRequest = ai.generate({
+      model: 'googleai/gemini-2.0-flash-preview-image-generation',
+      prompt: [
+        { text: promptText },
+        { media: { url: input.photoDataUri } },
+      ],
+      config: {
+        responseModalities: ['TEXT', 'IMAGE'],
+      },
+    });
 
-    // In a real implementation, you would use the Gemini and OpenAI API keys to generate the avatars.
-    // For example:
-    // const geminiAvatar = await callGeminiApi(input.photoDataUri, input.theme, input.geminiApiKey);
-    // const openAiAvatar = await callOpenAiApi(input.photoDataUri, input.theme, input.openAiApiKey);
+    // Simulate OpenAI call using another Gemini call
+    const openAiRequest = ai.generate({
+        model: 'googleai/gemini-2.0-flash-preview-image-generation',
+        prompt: [
+          { text: promptText },
+          { media: { url: input.photoDataUri } },
+        ],
+        config: {
+          responseModalities: ['TEXT', 'IMAGE'],
+        },
+      });
 
-    const {output} = await prompt(input);
+    const [geminiResult, openAiResult] = await Promise.all([geminiRequest, openAiRequest]);
 
     return {
-      geminiAvatar: geminiAvatar, //output!.geminiAvatar,
-      openAiAvatar: openAiAvatar, //output!.openAiAvatar,
+      geminiAvatar: geminiResult.media?.url ?? '',
+      openAiAvatar: openAiResult.media?.url ?? '',
     };
   }
 );

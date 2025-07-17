@@ -8,7 +8,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
 import { ImageUpload } from '@/components/image-upload';
 import { ImageComparison } from '@/components/image-comparison';
-import { Bot, Download, Share2 } from 'lucide-react';
+import { Bot, Download, Share2, Sparkles } from 'lucide-react';
 import Image from 'next/image';
 
 export default function EnhancePage() {

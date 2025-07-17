@@ -34,66 +34,6 @@ export async function enhanceImageQuality(input: EnhanceImageQualityInput): Prom
   return enhanceImageQualityFlow(input);
 }
 
-const enhanceImageQualityPromptGemini = ai.definePrompt({
-  name: 'enhanceImageQualityPromptGemini',
-  input: {schema: EnhanceImageQualityInputSchema},
-  output: {schema: z.string().describe('The enhanced image as a data URI.')},
-  prompt: `Enhance the quality of the following image to the highest possible resolution, up to 16K, using Gemini:
-
-  {{media url=photoDataUri}}
-  `,
-  config: {
-    safetySettings: [
-      {
-        category: 'HARM_CATEGORY_HATE_SPEECH',
-        threshold: 'BLOCK_ONLY_HIGH',
-      },
-      {
-        category: 'HARM_CATEGORY_DANGEROUS_CONTENT',
-        threshold: 'BLOCK_NONE',
-      },
-      {
-        category: 'HARM_CATEGORY_HARASSMENT',
-        threshold: 'BLOCK_MEDIUM_AND_ABOVE',
-      },
-      {
-        category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT',
-        threshold: 'BLOCK_LOW_AND_ABOVE',
-      },
-    ],
-  },
-});
-
-const enhanceImageQualityPromptOpenAI = ai.definePrompt({
-  name: 'enhanceImageQualityPromptOpenAI',
-  input: {schema: EnhanceImageQualityInputSchema},
-  output: {schema: z.string().describe('The enhanced image as a data URI.')},
-  prompt: `Enhance the quality of the following image to the highest possible resolution, up to 16K, using OpenAI:
-
-  {{media url=photoDataUri}}
-  `,
-  config: {
-    safetySettings: [
-      {
-        category: 'HARM_CATEGORY_HATE_SPEECH',
-        threshold: 'BLOCK_ONLY_HIGH',
-      },
-      {
-        category: 'HARM_CATEGORY_DANGEROUS_CONTENT',
-        threshold: 'BLOCK_NONE',
-      },
-      {
-        category: 'HARM_CATEGORY_HARASSMENT',
-        threshold: 'BLOCK_MEDIUM_AND_ABOVE',
-      },
-      {
-        category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT',
-        threshold: 'BLOCK_LOW_AND_ABOVE',
-      },
-    ],
-  },
-});
-
 const enhanceImageQualityFlow = ai.defineFlow(
   {
     name: 'enhanceImageQualityFlow',
@@ -101,33 +41,35 @@ const enhanceImageQualityFlow = ai.defineFlow(
     outputSchema: EnhanceImageQualityOutputSchema,
   },
   async input => {
+    const enhancePrompt = 'Enhance the quality of the following image to the highest possible resolution, up to 16K.'
+
     // Generate the enhanced image using Gemini.
-    const geminiResult = await ai.generate({
+    const geminiResult = ai.generate({
       prompt: [      
         {media: {url: input.photoDataUri}},
-        {text: enhanceImageQualityPromptGemini.prompt}],
+        {text: enhancePrompt}],
         model: 'googleai/gemini-2.0-flash-preview-image-generation',
         config: {
           responseModalities: ['TEXT', 'IMAGE'], // MUST provide both TEXT and IMAGE, IMAGE only won't work
         },
     });
-    const enhancedImageGemini = geminiResult.media?.url ?? 'no image generated';
 
     // Generate the enhanced image using OpenAI.
-    const openAIResult = await ai.generate({
+    const openAIResult = ai.generate({
       prompt: [      
         {media: {url: input.photoDataUri}},
-        {text: enhanceImageQualityPromptOpenAI.prompt}],
+        {text: enhancePrompt}],
         model: 'googleai/gemini-2.0-flash-preview-image-generation',
         config: {
           responseModalities: ['TEXT', 'IMAGE'], // MUST provide both TEXT and IMAGE, IMAGE only won't work
         },
     });
-    const enhancedImageOpenAI = openAIResult.media?.url ?? 'no image generated';
+    
+    const [geminiImage, openAIImage] = await Promise.all([geminiResult, openAIResult]);
 
     return {
-      enhancedImageGemini,
-      enhancedImageOpenAI,
+      enhancedImageGemini: geminiImage.media?.url ?? 'no image generated',
+      enhancedImageOpenAI: openAIImage.media?.url ?? 'no image generated',
     };
   }
 );

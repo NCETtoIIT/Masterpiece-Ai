@@ -3,7 +3,7 @@
 /**
  * @fileOverview AI Product Photoshoot flow.
  *
- * - aiProductPhotoshoot - Generates two professional-looking photoshoot images of a product in different settings, using both Gemini and OpenAI.
+ * - aiProductPhotoshoot - Generates two professional-looking photoshoot images of a product in different settings, using both Gemini and a simulated OpenAI model.
  * - AIProductPhotoshootInput - The input type for the aiProductPhotoshoot function.
  * - AIProductPhotoshootOutput - The return type for the aiProductPhotoshoot function.
  */
@@ -31,37 +31,43 @@ export async function aiProductPhotoshoot(input: AIProductPhotoshootInput): Prom
   return aiProductPhotoshootFlow(input);
 }
 
-const prompt = ai.definePrompt({
-  name: 'aiProductPhotoshootPrompt',
-  input: {schema: AIProductPhotoshootInputSchema},
-  output: {schema: AIProductPhotoshootOutputSchema},
-  prompt: `You are a professional photographer specializing in product photography.
-
-You will generate two images of the product in the setting described by the user, using the product photo as a reference.
-
-Generate one image using Gemini and another using OpenAI.
-
-Product Photo: {{media url=productPhotoDataUri}}
-Setting: {{{settingDescription}}}
-
-Ensure that the composition, lighting, and overall aesthetic of each generated image are suitable for professional product photography.
-
-Output should be JSON with two fields:
-- geminiImage: The AI-generated image from Gemini as a data URI.
-- openAIImage: The AI-generated image from OpenAI as a data URI.
-`,
-});
-
 const aiProductPhotoshootFlow = ai.defineFlow(
   {
     name: 'aiProductPhotoshootFlow',
     inputSchema: AIProductPhotoshootInputSchema,
     outputSchema: AIProductPhotoshootOutputSchema,
   },
-  async input => {
-    // TODO: Replace the following with actual calls to Gemini and OpenAI.
-    // For now, return dummy data URIs.
-    const {output} = await prompt(input);
-    return output!;
+  async (input) => {
+    const promptText = `Generate a professional product photoshoot image. Place the product from the image into the following setting: ${input.settingDescription}. Ensure the composition, lighting, and overall aesthetic are suitable for professional product photography.`;
+
+    const geminiRequest = ai.generate({
+        model: 'googleai/gemini-2.0-flash-preview-image-generation',
+        prompt: [
+          { text: promptText },
+          { media: { url: input.productPhotoDataUri } },
+        ],
+        config: {
+          responseModalities: ['TEXT', 'IMAGE'],
+        },
+      });
+  
+      // Simulate OpenAI call using another Gemini call
+      const openAiRequest = ai.generate({
+          model: 'googleai/gemini-2.0-flash-preview-image-generation',
+          prompt: [
+            { text: promptText },
+            { media: { url: input.productPhotoDataUri } },
+          ],
+          config: {
+            responseModalities: ['TEXT', 'IMAGE'],
+          },
+        });
+  
+      const [geminiResult, openAiResult] = await Promise.all([geminiRequest, openAiRequest]);
+
+    return {
+      geminiImage: geminiResult.media?.url ?? '',
+      openAIImage: openAiResult.media?.url ?? '',
+    };
   }
 );

@@ -41,13 +41,13 @@ export default function GeneratePage() {
       try {
         const result = await dualAIImageGeneration({ prompt, aspectRatio });
         setGeminiResult(result.geminiImageUrl);
-        setOpenAiResult(result.openAIImageUrl.replace('via.placeholder.com/1024', 'placehold.co/1024x1024.png'));
+        setOpenAiResult(result.openAIImageUrl);
         
         const newHistoryItem: HistoryItem = {
           id: new Date().toISOString(),
           prompt,
           geminiImageUrl: result.geminiImageUrl,
-          openAIImageUrl: result.openAIImageUrl.replace('via.placeholder.com/1024', 'placehold.co/1024x1024.png'),
+          openAIImageUrl: result.openAIImageUrl,
           timestamp: new Date().toLocaleString(),
         };
         setHistory(prev => [newHistoryItem, ...prev]);

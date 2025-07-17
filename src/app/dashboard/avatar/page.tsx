@@ -37,8 +37,6 @@ export default function AvatarPage() {
         const result = await aiAvatarGenerator({
           photoDataUri: userImage,
           theme,
-          geminiApiKey: '', // Not used by the flow, but required by schema
-          openAiApiKey: '', // Not used by the flow, but required by schema
         });
         setGeminiResult(result.geminiAvatar);
         setOpenAiResult(result.openAiAvatar);

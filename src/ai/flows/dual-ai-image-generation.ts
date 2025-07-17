@@ -45,7 +45,7 @@ const dualAIImageGenerationFlow = ai.defineFlow(
   },
   async input => {
     // Generate image using Gemini
-    const geminiResult = await ai.generate({
+    const geminiResult = ai.generate({
       model: 'googleai/gemini-2.0-flash-preview-image-generation',
       prompt: input.prompt,
       config: {
@@ -53,17 +53,21 @@ const dualAIImageGenerationFlow = ai.defineFlow(
       },
     });
 
-    // Generate image using OpenAI (replace with actual OpenAI call)
-    //const openAIResult = await openai.images.generate({
-    //  prompt: input.prompt,
-    //  n: 1,
-    //  size: "1024x1024",
-    //});
+    // For now, we use Gemini to simulate the OpenAI result as well.
+    // In a real scenario, you'd use a configured OpenAI plugin.
+    const openAIResult = ai.generate({
+      model: 'googleai/gemini-2.0-flash-preview-image-generation',
+      prompt: input.prompt,
+      config: {
+        responseModalities: ['TEXT', 'IMAGE'],
+      },
+    });
 
-    // For now, return a placeholder URL for OpenAI
+    const [geminiImage, openAIImage] = await Promise.all([geminiResult, openAIResult]);
+    
     return {
-      geminiImageUrl: geminiResult.media!.url,
-      openAIImageUrl: 'https://via.placeholder.com/1024',
+      geminiImageUrl: geminiImage.media!.url,
+      openAIImageUrl: openAIImage.media!.url,
     };
   }
 );
