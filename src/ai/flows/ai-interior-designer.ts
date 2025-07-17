@@ -31,70 +31,6 @@ export async function aiInteriorDesign(input: AiInteriorDesignInput): Promise<Ai
   return aiInteriorDesignFlow(input);
 }
 
-const geminiPrompt = ai.definePrompt({
-  name: 'aiInteriorDesignGeminiPrompt',
-  input: {schema: AiInteriorDesignInputSchema},
-  output: {schema: z.string()},
-  prompt: `You are an expert interior designer.  Create a redesigned version of the room in the provided image, matching the style and aesthetics described in the prompt.
-
-Prompt: {{{prompt}}}
-
-Image: {{media url=photoDataUri}}
-`,
-  config: {
-    safetySettings: [
-      {
-        category: 'HARM_CATEGORY_HATE_SPEECH',
-        threshold: 'BLOCK_ONLY_HIGH',
-      },
-      {
-        category: 'HARM_CATEGORY_DANGEROUS_CONTENT',
-        threshold: 'BLOCK_NONE',
-      },
-      {
-        category: 'HARM_CATEGORY_HARASSMENT',
-        threshold: 'BLOCK_MEDIUM_AND_ABOVE',
-      },
-      {
-        category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT',
-        threshold: 'BLOCK_LOW_AND_ABOVE',
-      },
-    ],
-  },
-});
-
-const openAiPrompt = ai.definePrompt({
-  name: 'aiInteriorDesignOpenAiPrompt',
-  input: {schema: AiInteriorDesignInputSchema},
-  output: {schema: z.string()},
-  prompt: `You are an expert interior designer.  Create a redesigned version of the room in the provided image, matching the style and aesthetics described in the prompt.
-
-Prompt: {{{prompt}}}
-
-Image: {{media url=photoDataUri}}
-`,
-    config: {
-    safetySettings: [
-      {
-        category: 'HARM_CATEGORY_HATE_SPEECH',
-        threshold: 'BLOCK_ONLY_HIGH',
-      },
-      {
-        category: 'HARM_CATEGORY_DANGEROUS_CONTENT',
-        threshold: 'BLOCK_NONE',
-      },
-      {
-        category: 'HARM_CATEGORY_HARASSMENT',
-        threshold: 'BLOCK_MEDIUM_AND_ABOVE',
-      },
-      {
-        category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT',
-        threshold: 'BLOCK_LOW_AND_ABOVE',
-      },
-    ],
-  },
-});
-
 const aiInteriorDesignFlow = ai.defineFlow(
   {
     name: 'aiInteriorDesignFlow',
@@ -102,17 +38,19 @@ const aiInteriorDesignFlow = ai.defineFlow(
     outputSchema: AiInteriorDesignOutputSchema,
   },
   async input => {
+    const promptText = `You are an expert interior designer. Create a redesigned version of the room in the provided image, matching the style and aesthetics described in the prompt. Prompt: ${input.prompt}`;
+    
     // Generate images using both Gemini and OpenAI
     const [geminiResult, openAiResult] = await Promise.all([
       ai.generate({
-        prompt: await geminiPrompt(input),
+        prompt: [{text: promptText}, {media: {url: input.photoDataUri}}],
         model: 'googleai/gemini-2.0-flash-preview-image-generation',
         config: {
           responseModalities: ['TEXT', 'IMAGE'],
         },
       }),
       ai.generate({
-        prompt: await openAiPrompt(input),
+        prompt: [{text: promptText}, {media: {url: input.photoDataUri}}],
         model: 'googleai/gemini-2.0-flash-preview-image-generation',
         config: {
           responseModalities: ['TEXT', 'IMAGE'],
