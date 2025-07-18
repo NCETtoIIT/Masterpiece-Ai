@@ -39,41 +39,40 @@ const aiProductPhotoshootFlow = ai.defineFlow(
     outputSchema: AIProductPhotoshootOutputSchema,
   },
   async (input) => {
-    const promptText = `Generate a professional product photoshoot image. Place the product from the image into the following setting: ${input.settingDescription}. Ensure the composition, lighting, and overall aesthetic are suitable for professional product photography.`;
+    const prompt = [
+      { media: { url: input.productPhotoDataUri } },
+      { text: `Generate a professional product photoshoot image. Place the product from the image into the following setting: ${input.settingDescription}. Ensure the composition, lighting, and overall aesthetic are suitable for professional product photography.` },
+    ];
 
     try {
-      const geminiRequest = ai.generate({
+      const [geminiResult, openAiResult] = await Promise.all([
+        ai.generate({
           model: 'googleai/gemini-2.0-flash-preview-image-generation',
-          prompt: [
-            { text: promptText },
-            { media: { url: input.productPhotoDataUri } },
-          ],
+          prompt,
           config: {
             responseModalities: ['TEXT', 'IMAGE'],
           },
-        });
-    
-        // Simulate OpenAI call using another Gemini call
-        const openAiRequest = ai.generate({
-            model: 'googleai/gemini-2.0-flash-preview-image-generation',
-            prompt: [
-              { text: promptText },
-              { media: { url: input.productPhotoDataUri } },
-            ],
-            config: {
-              responseModalities: ['TEXT', 'IMAGE'],
-            },
-          });
-    
-        const [geminiResult, openAiResult] = await Promise.all([geminiRequest, openAiRequest]);
+        }),
+        ai.generate({
+          model: 'googleai/gemini-2.0-flash-preview-image-generation',
+          prompt,
+          config: {
+            responseModalities: ['TEXT', 'IMAGE'],
+          },
+        }),
+      ]);
   
+      if (!geminiResult.media?.url || !openAiResult.media?.url) {
+        throw new Error('Image generation failed to return a valid image.');
+      }
+
       return {
-        geminiImage: geminiResult.media?.url ?? '',
-        openAIImage: openAiResult.media?.url ?? '',
+        geminiImage: geminiResult.media.url,
+        openAIImage: openAiResult.media.url,
       };
     } catch (error) {
       console.error('Error in aiProductPhotoshootFlow:', error);
-      throw new Error('Failed to generate product photoshoot. The AI service may be temporarily unavailable.');
+      throw new Error('Failed to generate product photoshoot. The AI service may have rejected the prompt or be temporarily unavailable.');
     }
   }
 );
