@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useTransition } from 'react';
@@ -9,7 +10,6 @@ import { useToast } from '@/hooks/use-toast';
 import { ImageUpload } from '@/components/image-upload';
 import { ImageComparison } from '@/components/image-comparison';
 import { Bot, Download, Share2, Sparkles } from 'lucide-react';
-import Image from 'next/image';
 
 export default function EnhancePage() {
   const [originalImage, setOriginalImage] = useState<string | null>(null);
@@ -72,7 +72,7 @@ export default function EnhancePage() {
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
-      <div className="lg:col-span-1 flex flex-col gap-6 sticky top-20">
+      <div className="lg:col-span-1 flex flex-col gap-6">
         <Card className="shadow-lg">
           <CardHeader>
             <CardTitle>Image Enhancement</CardTitle>
