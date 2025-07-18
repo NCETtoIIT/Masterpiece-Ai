@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useTransition } from 'react';
@@ -8,7 +9,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
 import { ImageUpload } from '@/components/image-upload';
 import Image from 'next/image';
-import { Download, Share2, Scissors, Wand2 } from 'lucide-react';
+import { Download, Share2, Scissors, Wand2, RefreshCw } from 'lucide-react';
 
 export default function RemoveBgPage() {
   const [originalImage, setOriginalImage] = useState<string | null>(null);
@@ -40,6 +41,41 @@ export default function RemoveBgPage() {
         });
       }
     });
+  };
+
+  const handleDownload = (imageSrc: string | null) => {
+    if (!imageSrc) return;
+    const link = document.createElement('a');
+    link.href = imageSrc;
+    link.download = 'background-removed.png';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const handleShare = async (imageSrc: string | null) => {
+    if (!imageSrc) return;
+    try {
+      const response = await fetch(imageSrc);
+      const blob = await response.blob();
+      const file = new File([blob], 'image.png', { type: blob.type });
+
+      if (navigator.share) {
+        await navigator.share({
+          files: [file],
+          title: 'Background Removed Image',
+          text: 'Check out this image with the background removed!',
+        });
+      } else {
+        await navigator.clipboard.write([
+          new ClipboardItem({ [file.type]: file })
+        ]);
+        toast({ title: 'Success', description: 'Image copied to clipboard.' });
+      }
+    } catch (error) {
+      console.error('Sharing failed', error);
+      toast({ title: 'Error', description: 'Could not share the image.', variant: 'destructive' });
+    }
   };
 
   return (
@@ -84,8 +120,9 @@ export default function RemoveBgPage() {
           </div>
         </CardContent>
         <CardFooter className="gap-2">
-            <Button variant="outline" size="icon" disabled={!resultImage || isPending}><Download className="w-4 h-4" /></Button>
-            <Button variant="outline" size="icon" disabled={!resultImage || isPending}><Share2 className="w-4 h-4" /></Button>
+            <Button variant="outline" size="icon" onClick={() => handleDownload(resultImage)} disabled={!resultImage || isPending}><Download className="w-4 h-4" /></Button>
+            <Button variant="outline" size="icon" onClick={() => handleShare(resultImage)} disabled={!resultImage || isPending}><Share2 className="w-4 h-4" /></Button>
+            <Button variant="outline" size="icon" onClick={handleRemove} disabled={!originalImage || isPending}><RefreshCw className="w-4 h-4" /></Button>
         </CardFooter>
       </Card>
     </div>

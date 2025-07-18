@@ -70,6 +70,41 @@ export default function GeneratePage() {
     }
   }
 
+  const handleDownload = (imageSrc: string | null, filename: string) => {
+    if (!imageSrc) return;
+    const link = document.createElement('a');
+    link.href = imageSrc;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const handleShare = async (imageSrc: string | null) => {
+    if (!imageSrc) return;
+    try {
+      const response = await fetch(imageSrc);
+      const blob = await response.blob();
+      const file = new File([blob], 'image.png', { type: blob.type });
+
+      if (navigator.share) {
+        await navigator.share({
+          files: [file],
+          title: 'AI Generated Image',
+          text: 'Check out this image I generated!',
+        });
+      } else {
+        await navigator.clipboard.write([
+          new ClipboardItem({ [file.type]: file })
+        ]);
+        toast({ title: 'Success', description: 'Image copied to clipboard.' });
+      }
+    } catch (error) {
+      console.error('Sharing failed', error);
+      toast({ title: 'Error', description: 'Could not share the image.', variant: 'destructive' });
+    }
+  };
+
   const ImageResultCard = ({ src, source }: { src: string | null; source: 'Gemini' | 'OpenAI' }) => (
     <Card className="flex-1 min-w-[300px] shadow-lg">
       <CardHeader>
@@ -92,13 +127,13 @@ export default function GeneratePage() {
         </div>
       </CardContent>
       <CardFooter className="gap-2">
-        <Button variant="outline" size="icon" disabled={!src || isPending}>
+        <Button variant="outline" size="icon" onClick={() => handleDownload(src, `${source.toLowerCase()}-result.png`)} disabled={!src || isPending}>
           <Download className="w-4 h-4" />
         </Button>
-        <Button variant="outline" size="icon" disabled={!src || isPending}>
+        <Button variant="outline" size="icon" onClick={() => handleShare(src)} disabled={!src || isPending}>
           <Share2 className="w-4 h-4" />
         </Button>
-        <Button variant="outline" size="icon" onClick={handleGenerate} disabled={isPending}>
+        <Button variant="outline" size="icon" onClick={handleGenerate} disabled={isPending || !prompt}>
           <RefreshCw className="w-4 h-4" />
         </Button>
       </CardFooter>
@@ -106,9 +141,9 @@ export default function GeneratePage() {
   );
 
   return (
-    <div className="space-y-8">
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-1 flex flex-col gap-6">
+    <div className="flex flex-col gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+        <div className="lg:col-span-1 flex flex-col gap-6 lg:sticky lg:top-6">
             <Card className="shadow-lg">
               <CardHeader>
                 <CardTitle>Image Generation</CardTitle>
@@ -137,7 +172,7 @@ export default function GeneratePage() {
                 </Select>
               </CardContent>
               <CardFooter className="flex-col items-stretch gap-2">
-                <Button onClick={handleGenerate} disabled={isPending} className="font-bold">
+                <Button onClick={handleGenerate} disabled={isPending || !prompt} className="font-bold">
                   {isPending ? 'Generating...' : 'Generate Image'}
                 </Button>
                 <div className="text-xs text-muted-foreground text-center">
