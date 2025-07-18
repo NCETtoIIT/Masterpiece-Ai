@@ -1,3 +1,4 @@
+
 'use server';
 
 /**
@@ -40,19 +41,8 @@ const aiAvatarGeneratorFlow = ai.defineFlow(
   async (input) => {
     const promptText = `Generate a stylized avatar based on the user's photo in the style of: ${input.theme}.`;
 
-    const geminiRequest = ai.generate({
-      model: 'googleai/gemini-2.0-flash-preview-image-generation',
-      prompt: [
-        { text: promptText },
-        { media: { url: input.photoDataUri } },
-      ],
-      config: {
-        responseModalities: ['TEXT', 'IMAGE'],
-      },
-    });
-
-    // Simulate OpenAI call using another Gemini call
-    const openAiRequest = ai.generate({
+    try {
+      const geminiRequest = ai.generate({
         model: 'googleai/gemini-2.0-flash-preview-image-generation',
         prompt: [
           { text: promptText },
@@ -62,12 +52,28 @@ const aiAvatarGeneratorFlow = ai.defineFlow(
           responseModalities: ['TEXT', 'IMAGE'],
         },
       });
-
-    const [geminiResult, openAiResult] = await Promise.all([geminiRequest, openAiRequest]);
-
-    return {
-      geminiAvatar: geminiResult.media?.url ?? '',
-      openAiAvatar: openAiResult.media?.url ?? '',
-    };
+  
+      // Simulate OpenAI call using another Gemini call
+      const openAiRequest = ai.generate({
+          model: 'googleai/gemini-2.0-flash-preview-image-generation',
+          prompt: [
+            { text: promptText },
+            { media: { url: input.photoDataUri } },
+          ],
+          config: {
+            responseModalities: ['TEXT', 'IMAGE'],
+          },
+        });
+  
+      const [geminiResult, openAiResult] = await Promise.all([geminiRequest, openAiRequest]);
+  
+      return {
+        geminiAvatar: geminiResult.media?.url ?? '',
+        openAiAvatar: openAiResult.media?.url ?? '',
+      };
+    } catch (error) {
+      console.error('Error in aiAvatarGeneratorFlow:', error);
+      throw new Error('Failed to generate avatars. The AI service may be temporarily unavailable.');
+    }
   }
 );

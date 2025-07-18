@@ -1,3 +1,4 @@
+
 'use server';
 
 /**
@@ -40,27 +41,32 @@ const aiInteriorDesignFlow = ai.defineFlow(
   async input => {
     const promptText = `You are an expert interior designer. Create a redesigned version of the room in the provided image, matching the style and aesthetics described in the prompt. Prompt: ${input.prompt}`;
     
-    // Generate images using both Gemini and OpenAI
-    const [geminiResult, openAiResult] = await Promise.all([
-      ai.generate({
-        prompt: [{text: promptText}, {media: {url: input.photoDataUri}}],
-        model: 'googleai/gemini-2.0-flash-preview-image-generation',
-        config: {
-          responseModalities: ['TEXT', 'IMAGE'],
-        },
-      }),
-      ai.generate({
-        prompt: [{text: promptText}, {media: {url: input.photoDataUri}}],
-        model: 'googleai/gemini-2.0-flash-preview-image-generation',
-        config: {
-          responseModalities: ['TEXT', 'IMAGE'],
-        },
-      }),
-    ]);
-
-    return {
-      geminiImage: geminiResult.media?.url ?? '',
-      openAiImage: openAiResult.media?.url ?? '',
-    };
+    try {
+      // Generate images using both Gemini and OpenAI
+      const [geminiResult, openAiResult] = await Promise.all([
+        ai.generate({
+          prompt: [{text: promptText}, {media: {url: input.photoDataUri}}],
+          model: 'googleai/gemini-2.0-flash-preview-image-generation',
+          config: {
+            responseModalities: ['TEXT', 'IMAGE'],
+          },
+        }),
+        ai.generate({
+          prompt: [{text: promptText}, {media: {url: input.photoDataUri}}],
+          model: 'googleai/gemini-2.0-flash-preview-image-generation',
+          config: {
+            responseModalities: ['TEXT', 'IMAGE'],
+          },
+        }),
+      ]);
+  
+      return {
+        geminiImage: geminiResult.media?.url ?? '',
+        openAiImage: openAiResult.media?.url ?? '',
+      };
+    } catch (error) {
+      console.error('Error in aiInteriorDesignFlow:', error);
+      throw new Error('Failed to generate interior designs. The AI service may be temporarily unavailable.');
+    }
   }
 );

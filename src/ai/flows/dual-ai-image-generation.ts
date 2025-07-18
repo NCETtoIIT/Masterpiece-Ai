@@ -1,3 +1,4 @@
+
 'use server';
 /**
  * @fileOverview Dual AI Image Generation Flow. Generates two images based on a text prompt,
@@ -44,30 +45,35 @@ const dualAIImageGenerationFlow = ai.defineFlow(
     outputSchema: DualAIImageGenerationOutputSchema,
   },
   async input => {
-    // Generate image using Gemini
-    const geminiResult = ai.generate({
-      model: 'googleai/gemini-2.0-flash-preview-image-generation',
-      prompt: input.prompt,
-      config: {
-        responseModalities: ['TEXT', 'IMAGE'],
-      },
-    });
-
-    // For now, we use Gemini to simulate the OpenAI result as well.
-    // In a real scenario, you'd use a configured OpenAI plugin.
-    const openAIResult = ai.generate({
-      model: 'googleai/gemini-2.0-flash-preview-image-generation',
-      prompt: input.prompt,
-      config: {
-        responseModalities: ['TEXT', 'IMAGE'],
-      },
-    });
-
-    const [geminiImage, openAIImage] = await Promise.all([geminiResult, openAIResult]);
-    
-    return {
-      geminiImageUrl: geminiImage.media?.url ?? '',
-      openAIImageUrl: openAIImage.media?.url ?? '',
-    };
+    try {
+      // Generate image using Gemini
+      const geminiResult = ai.generate({
+        model: 'googleai/gemini-2.0-flash-preview-image-generation',
+        prompt: input.prompt,
+        config: {
+          responseModalities: ['TEXT', 'IMAGE'],
+        },
+      });
+  
+      // For now, we use Gemini to simulate the OpenAI result as well.
+      // In a real scenario, you'd use a configured OpenAI plugin.
+      const openAIResult = ai.generate({
+        model: 'googleai/gemini-2.0-flash-preview-image-generation',
+        prompt: input.prompt,
+        config: {
+          responseModalities: ['TEXT', 'IMAGE'],
+        },
+      });
+  
+      const [geminiImage, openAIImage] = await Promise.all([geminiResult, openAIResult]);
+      
+      return {
+        geminiImageUrl: geminiImage.media?.url ?? '',
+        openAIImageUrl: openAIImage.media?.url ?? '',
+      };
+    } catch (error) {
+      console.error('Error in dualAIImageGenerationFlow:', error);
+      throw new Error('Failed to generate images. The AI service may be temporarily unavailable.');
+    }
   }
 );

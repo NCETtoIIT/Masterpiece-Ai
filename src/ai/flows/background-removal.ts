@@ -1,3 +1,4 @@
+
 // src/ai/flows/background-removal.ts
 'use server';
 
@@ -43,22 +44,27 @@ const removeBackgroundFlow = ai.defineFlow(
     outputSchema: BackgroundRemovalOutputSchema,
   },
   async input => {
-    // Use Gemini 2.0 Flash to remove the background.
-    const {media} = await ai.generate({
-      model: 'googleai/gemini-2.0-flash-preview-image-generation',
-      prompt: [
-        {media: {url: input.photoDataUri}},
-        {text: 'Remove the background of this image.'},
-      ],
-      config: {
-        responseModalities: ['TEXT', 'IMAGE'], // MUST provide both TEXT and IMAGE, IMAGE only won't work
-      },
-    });
-
-    if (!media) {
-      throw new Error('No media returned from background removal.');
+    try {
+      // Use Gemini 2.0 Flash to remove the background.
+      const {media} = await ai.generate({
+        model: 'googleai/gemini-2.0-flash-preview-image-generation',
+        prompt: [
+          {media: {url: input.photoDataUri}},
+          {text: 'Remove the background of this image.'},
+        ],
+        config: {
+          responseModalities: ['TEXT', 'IMAGE'], // MUST provide both TEXT and IMAGE, IMAGE only won't work
+        },
+      });
+  
+      if (!media?.url) {
+        throw new Error('No media returned from background removal.');
+      }
+  
+      return {removedBackgroundDataUri: media.url};
+    } catch (error) {
+      console.error('Error in removeBackgroundFlow:', error);
+      throw new Error('Failed to remove background. The AI service may be temporarily unavailable.');
     }
-
-    return {removedBackgroundDataUri: media.url};
   }
 );

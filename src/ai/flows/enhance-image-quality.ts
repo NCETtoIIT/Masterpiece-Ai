@@ -1,3 +1,4 @@
+
 'use server';
 
 /**
@@ -43,33 +44,38 @@ const enhanceImageQualityFlow = ai.defineFlow(
   async input => {
     const enhancePrompt = 'Enhance the quality of the following image to the highest possible resolution, up to 16K.'
 
-    // Generate the enhanced image using Gemini.
-    const geminiResult = ai.generate({
-      prompt: [      
-        {media: {url: input.photoDataUri}},
-        {text: enhancePrompt}],
-        model: 'googleai/gemini-2.0-flash-preview-image-generation',
-        config: {
-          responseModalities: ['TEXT', 'IMAGE'], // MUST provide both TEXT and IMAGE, IMAGE only won't work
-        },
-    });
-
-    // Generate the enhanced image using OpenAI.
-    const openAIResult = ai.generate({
-      prompt: [      
-        {media: {url: input.photoDataUri}},
-        {text: enhancePrompt}],
-        model: 'googleai/gemini-2.0-flash-preview-image-generation',
-        config: {
-          responseModalities: ['TEXT', 'IMAGE'], // MUST provide both TEXT and IMAGE, IMAGE only won't work
-        },
-    });
-    
-    const [geminiImage, openAIImage] = await Promise.all([geminiResult, openAIResult]);
-
-    return {
-      enhancedImageGemini: geminiImage.media?.url ?? 'no image generated',
-      enhancedImageOpenAI: openAIImage.media?.url ?? 'no image generated',
-    };
+    try {
+      // Generate the enhanced image using Gemini.
+      const geminiResult = ai.generate({
+        prompt: [      
+          {media: {url: input.photoDataUri}},
+          {text: enhancePrompt}],
+          model: 'googleai/gemini-2.0-flash-preview-image-generation',
+          config: {
+            responseModalities: ['TEXT', 'IMAGE'], // MUST provide both TEXT and IMAGE, IMAGE only won't work
+          },
+      });
+  
+      // Generate the enhanced image using OpenAI.
+      const openAIResult = ai.generate({
+        prompt: [      
+          {media: {url: input.photoDataUri}},
+          {text: enhancePrompt}],
+          model: 'googleai/gemini-2.0-flash-preview-image-generation',
+          config: {
+            responseModalities: ['TEXT', 'IMAGE'], // MUST provide both TEXT and IMAGE, IMAGE only won't work
+          },
+      });
+      
+      const [geminiImage, openAIImage] = await Promise.all([geminiResult, openAIResult]);
+  
+      return {
+        enhancedImageGemini: geminiImage.media?.url ?? 'no image generated',
+        enhancedImageOpenAI: openAIImage.media?.url ?? 'no image generated',
+      };
+    } catch (error) {
+      console.error('Error in enhanceImageQualityFlow:', error);
+      throw new Error('Failed to enhance image. The AI service may be temporarily unavailable.');
+    }
   }
 );

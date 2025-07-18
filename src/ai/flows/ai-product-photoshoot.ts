@@ -1,3 +1,4 @@
+
 'use server';
 
 /**
@@ -40,19 +41,8 @@ const aiProductPhotoshootFlow = ai.defineFlow(
   async (input) => {
     const promptText = `Generate a professional product photoshoot image. Place the product from the image into the following setting: ${input.settingDescription}. Ensure the composition, lighting, and overall aesthetic are suitable for professional product photography.`;
 
-    const geminiRequest = ai.generate({
-        model: 'googleai/gemini-2.0-flash-preview-image-generation',
-        prompt: [
-          { text: promptText },
-          { media: { url: input.productPhotoDataUri } },
-        ],
-        config: {
-          responseModalities: ['TEXT', 'IMAGE'],
-        },
-      });
-  
-      // Simulate OpenAI call using another Gemini call
-      const openAiRequest = ai.generate({
+    try {
+      const geminiRequest = ai.generate({
           model: 'googleai/gemini-2.0-flash-preview-image-generation',
           prompt: [
             { text: promptText },
@@ -62,12 +52,28 @@ const aiProductPhotoshootFlow = ai.defineFlow(
             responseModalities: ['TEXT', 'IMAGE'],
           },
         });
+    
+        // Simulate OpenAI call using another Gemini call
+        const openAiRequest = ai.generate({
+            model: 'googleai/gemini-2.0-flash-preview-image-generation',
+            prompt: [
+              { text: promptText },
+              { media: { url: input.productPhotoDataUri } },
+            ],
+            config: {
+              responseModalities: ['TEXT', 'IMAGE'],
+            },
+          });
+    
+        const [geminiResult, openAiResult] = await Promise.all([geminiRequest, openAiRequest]);
   
-      const [geminiResult, openAiResult] = await Promise.all([geminiRequest, openAiRequest]);
-
-    return {
-      geminiImage: geminiResult.media?.url ?? '',
-      openAIImage: openAiResult.media?.url ?? '',
-    };
+      return {
+        geminiImage: geminiResult.media?.url ?? '',
+        openAIImage: openAiResult.media?.url ?? '',
+      };
+    } catch (error) {
+      console.error('Error in aiProductPhotoshootFlow:', error);
+      throw new Error('Failed to generate product photoshoot. The AI service may be temporarily unavailable.');
+    }
   }
 );
