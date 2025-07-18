@@ -61,20 +61,28 @@ export default function RemoveBgPage() {
       const file = new File([blob], 'image.png', { type: blob.type });
 
       if (navigator.share) {
-        await navigator.share({
-          files: [file],
-          title: 'Background Removed Image',
-          text: 'Check out this image with the background removed!',
-        });
-      } else {
-        await navigator.clipboard.write([
-          new ClipboardItem({ [file.type]: file })
-        ]);
-        toast({ title: 'Success', description: 'Image copied to clipboard.' });
+        try {
+          await navigator.share({
+            files: [file],
+            title: 'Background Removed Image',
+            text: 'Check out this image with the background removed!',
+          });
+          return; // Early return if share is successful
+        } catch (shareError) {
+           // If sharing fails, fall through to clipboard copy
+           console.error('Sharing failed, falling back to clipboard:', shareError);
+        }
       }
+      
+      // Fallback to clipboard
+      await navigator.clipboard.write([
+        new ClipboardItem({ [file.type]: file })
+      ]);
+      toast({ title: 'Success', description: 'Image copied to clipboard.' });
+
     } catch (error) {
-      console.error('Sharing failed', error);
-      toast({ title: 'Error', description: 'Could not share the image.', variant: 'destructive' });
+      console.error('Sharing or copying failed', error);
+      toast({ title: 'Error', description: 'Could not share or copy the image.', variant: 'destructive' });
     }
   };
 

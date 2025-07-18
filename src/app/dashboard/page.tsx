@@ -44,14 +44,16 @@ export default function GeneratePage() {
         setGeminiResult(result.geminiImageUrl);
         setOpenAiResult(result.openAIImageUrl);
         
-        const newHistoryItem: HistoryItem = {
-          id: new Date().toISOString(),
-          prompt,
-          geminiImageUrl: result.geminiImageUrl,
-          openAIImageUrl: result.openAIImageUrl,
-          timestamp: new Date().toLocaleString(),
-        };
-        setHistory(prev => [newHistoryItem, ...prev]);
+        if (result.geminiImageUrl || result.openAIImageUrl) {
+          const newHistoryItem: HistoryItem = {
+            id: new Date().toISOString(),
+            prompt,
+            geminiImageUrl: result.geminiImageUrl,
+            openAIImageUrl: result.openAIImageUrl,
+            timestamp: new Date().toLocaleString(),
+          };
+          setHistory(prev => [newHistoryItem, ...prev]);
+        }
 
       } catch (error) {
         console.error(error);
@@ -88,20 +90,28 @@ export default function GeneratePage() {
       const file = new File([blob], 'image.png', { type: blob.type });
 
       if (navigator.share) {
-        await navigator.share({
-          files: [file],
-          title: 'AI Generated Image',
-          text: 'Check out this image I generated!',
-        });
-      } else {
-        await navigator.clipboard.write([
-          new ClipboardItem({ [file.type]: file })
-        ]);
-        toast({ title: 'Success', description: 'Image copied to clipboard.' });
+        try {
+          await navigator.share({
+            files: [file],
+            title: 'AI Generated Image',
+            text: 'Check out this image I generated!',
+          });
+          return; // Early return if share is successful
+        } catch (shareError) {
+           // If sharing fails, fall through to clipboard copy
+           console.error('Sharing failed, falling back to clipboard:', shareError);
+        }
       }
+      
+      // Fallback to clipboard
+      await navigator.clipboard.write([
+        new ClipboardItem({ [file.type]: file })
+      ]);
+      toast({ title: 'Success', description: 'Image copied to clipboard.' });
+
     } catch (error) {
-      console.error('Sharing failed', error);
-      toast({ title: 'Error', description: 'Could not share the image.', variant: 'destructive' });
+      console.error('Sharing or copying failed', error);
+      toast({ title: 'Error', description: 'Could not share or copy the image.', variant: 'destructive' });
     }
   };
 
@@ -143,7 +153,7 @@ export default function GeneratePage() {
   return (
     <div className="flex flex-col gap-8">
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
-        <div className="lg:col-span-1 flex flex-col gap-6 lg:sticky lg:top-6">
+        <div className="lg:col-span-1 flex flex-col gap-6">
             <Card className="shadow-lg">
               <CardHeader>
                 <CardTitle>Image Generation</CardTitle>
@@ -176,7 +186,7 @@ export default function GeneratePage() {
                   {isPending ? 'Generating...' : 'Generate Image'}
                 </Button>
                 <div className="text-xs text-muted-foreground text-center">
-                  Press <Badge variant="secondary" className="px-1.5 py-0.5"><CornerDownLeft className="w-3 h-3 mr-1" />+Enter</Badge> to generate
+                  <Badge variant="secondary" className="px-1.5 py-0.5"><CornerDownLeft className="w-3 h-3 mr-1" />+Enter</Badge> to generate
                 </div>
               </CardFooter>
             </Card>

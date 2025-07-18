@@ -69,20 +69,28 @@ export default function PhotoshootPage() {
       const file = new File([blob], 'image.png', { type: blob.type });
 
       if (navigator.share) {
-        await navigator.share({
-          files: [file],
-          title: 'AI Product Photoshoot',
-          text: 'Check out this product photoshoot I generated!',
-        });
-      } else {
-        await navigator.clipboard.write([
-          new ClipboardItem({ [file.type]: file })
-        ]);
-        toast({ title: 'Success', description: 'Image copied to clipboard.' });
+        try {
+          await navigator.share({
+            files: [file],
+            title: 'AI Product Photoshoot',
+            text: 'Check out this product photoshoot I generated!',
+          });
+          return; // Early return if share is successful
+        } catch (shareError) {
+           // If sharing fails, fall through to clipboard copy
+           console.error('Sharing failed, falling back to clipboard:', shareError);
+        }
       }
+      
+      // Fallback to clipboard
+      await navigator.clipboard.write([
+        new ClipboardItem({ [file.type]: file })
+      ]);
+      toast({ title: 'Success', description: 'Image copied to clipboard.' });
+
     } catch (error) {
-      console.error('Sharing failed', error);
-      toast({ title: 'Error', description: 'Could not share the image.', variant: 'destructive' });
+      console.error('Sharing or copying failed', error);
+      toast({ title: 'Error', description: 'Could not share or copy the image.', variant: 'destructive' });
     }
   };
   
@@ -115,7 +123,7 @@ export default function PhotoshootPage() {
   return (
     <div className="flex flex-col gap-8">
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
-        <div className="lg:col-span-1 flex flex-col gap-6 lg:sticky lg:top-6">
+        <div className="lg:col-span-1 flex flex-col gap-6">
           <Card className="shadow-lg">
             <CardHeader>
               <CardTitle>AI Product Photoshoot</CardTitle>
